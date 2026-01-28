@@ -34,7 +34,7 @@ app.use('/api/teachers', require('./routes/teacherRoutes'));
 app.use('/api/papers', require('./routes/paperRoutes'));
 app.use('/api/questions', require('./routes/questionRoutes'));
 
-const PORT = 5000
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Server is running on http://localhost:${PORT}`)
 })
