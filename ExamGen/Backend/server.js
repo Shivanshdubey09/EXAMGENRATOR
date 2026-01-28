@@ -15,7 +15,18 @@ app.use((req, res, next) => {
 })
 
 // Unit II: Middleware Setup
-app.use(cors())
+app.use(
+  cors({
+    origin: [
+      'http://localhost:5173',
+      'https://frontend-xi-six-34.vercel.app',
+      'https://frontend-ey3rsjqje-shivanshdubey09s-projects.vercel.app'
+    ],
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true
+  })
+)
+
 app.use(bodyParser.json())
 
 // Unit IV: MongoDB Atlas Connection
