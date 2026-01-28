@@ -5,7 +5,7 @@ import axios from "axios";
  Used to connect frontend with backend APIs
 */
 const API = axios.create({
-  baseURL: "https://examgen-pro-smart-exam-paper-generator.onrender.com/api",
+  baseURL: "https://examgenrator.onrender.com/api",
   withCredentials: true,
 });
 
