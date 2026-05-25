@@ -3,10 +3,10 @@ const router = express.Router();
 const Exam = require('../models/Exam');
 const axios = require("axios");
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 
-if (!GEMINI_API_KEY) {
-  console.error("❌ GEMINI_API_KEY is missing in .env file");
+if (!OPENROUTER_API_KEY) {
+  console.error("❌ OPENROUTER_API_KEY is missing in .env file");
 }
 
 /* =========================================
@@ -119,18 +119,21 @@ router.get('/generate', async (req, res) => {
     });
 
     const response = await axios.post(
-      `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+      "https://openrouter.ai/api/v1/chat/completions",
       {
-        contents: [
-          {
-            parts: [{ text: prompt }]
-          }
-        ]
+        model: "google/gemini-2.5-flash",
+        messages: [{ role: "user", content: prompt }]
+      },
+      {
+        headers: {
+          "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+          "Content-Type": "application/json"
+        }
       }
     );
 
     let text =
-      response.data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      response.data.choices?.[0]?.message?.content || "";
 
     // Remove markdown fences
     text = text.replace(/```json/g, "").replace(/```/g, "").trim();
@@ -191,7 +194,7 @@ try {
     });
 
   } catch (error) {
-    console.error("❌ Gemini Route Error:", error.response?.data || error.message);
+    console.error("❌ OpenRouter Route Error:", error.response?.data || error.message);
     res.status(500).json({
       error: "Failed to generate and save questions",
       details: error.response?.data || error.message

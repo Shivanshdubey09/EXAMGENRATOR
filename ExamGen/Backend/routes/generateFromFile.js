@@ -71,15 +71,15 @@ router.post(
 Ignore unrelated content.`
         : `Generate well-balanced questions from the full provided content.`;
 
-      /* ================= GEMINI CALL ================= */
-      const geminiResponse = await axios.post(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      /* ================= OPENROUTER CALL ================= */
+      const openRouterResponse = await axios.post(
+        "https://openrouter.ai/api/v1/chat/completions",
         {
-          contents: [
+          model: "google/gemini-2.5-flash",
+          messages: [
             {
-              parts: [
-                {
-                  text: `
+              role: "user",
+              content: `
 You are a professional academic exam generator.
 
 STRICT RULES:
@@ -112,15 +112,19 @@ Return STRICT JSON only in this format:
   ]
 }
 `
-                }
-              ]
             }
           ]
+        },
+        {
+          headers: {
+            "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
+            "Content-Type": "application/json"
+          }
         }
       );
 
       const aiText =
-        geminiResponse.data.candidates?.[0]?.content?.parts?.[0]?.text;
+        openRouterResponse.data.choices?.[0]?.message?.content;
 
       if (!aiText) {
         return res.status(500).json({ message: "AI returned empty response" });
