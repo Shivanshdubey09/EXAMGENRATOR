@@ -1,11 +1,7 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 
-/*
-ProtectedRoute
-Allows public routes: /login, /register
-Protects everything else
-*/
+
 const ProtectedRoute = ({ children }) => {
   const location = useLocation();
   const isLoggedIn = localStorage.getItem('isTeacherLoggedIn');

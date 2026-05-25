@@ -1,12 +1,11 @@
-import axios from "axios";
 
-/*
- Axios instance
- Used to connect frontend with backend APIs
-*/
+import axios from 'axios';
+
+const configuredBaseUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const normalizedBaseUrl = configuredBaseUrl.replace(/\/+$/, '');
+
 const API = axios.create({
-  baseURL: "https://examgenrator.onrender.com/api",
-  withCredentials: true,
+  baseURL: `${normalizedBaseUrl}/api`,
 });
 
 export default API;

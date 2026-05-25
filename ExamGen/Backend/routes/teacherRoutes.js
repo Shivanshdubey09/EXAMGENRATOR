@@ -1,57 +1,78 @@
-const express = require('express');
-const router = express.Router();
-const Teacher = require('../models/Teacher');
+const express = require("express");
+const bcrypt = require("bcryptjs");
+const Teacher = require("../models/Teacher");
 
-/*
-POST /api/teachers/register
-Registers a new teacher
-*/
-router.post('/register', async (req, res) => {
+const router = express.Router();
+
+/* ===============================
+   REGISTER
+================================ */
+router.post("/register", async (req, res) => {
   try {
     const { name, subject, email, password } = req.body;
 
-    // Basic validation
     if (!name || !subject || !email || !password) {
-      return res.status(400).json({ message: 'All fields required' });
+      return res.status(400).json({ message: "All fields required." });
     }
 
-    // Check if teacher already exists
-    const existingTeacher = await Teacher.findOne({ email });
-    if (existingTeacher) {
-      return res.status(400).json({ message: 'Teacher already exists' });
+    const existing = await Teacher.findOne({ email });
+    if (existing) {
+      return res.status(400).json({ message: "Email already registered." });
     }
 
-    // Create teacher
+    const hashedPassword = await bcrypt.hash(password, 10);
+
     const teacher = await Teacher.create({
       name,
       subject,
       email,
-      password, // (we will hash later)
+      password: hashedPassword,
     });
 
-    res.status(201).json(teacher);
+    res.status(201).json({
+      _id: teacher._id,
+      name: teacher.name,
+      email: teacher.email,
+      subject: teacher.subject,
+    });
+
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Server error' });
+    console.error("REGISTER ERROR:", err);
+    res.status(500).json({ message: "Registration failed." });
   }
 });
 
-/*
-POST /api/teachers/login
-Validates teacher credentials
-*/
-router.post('/login', async (req, res) => {
+/* ===============================
+   LOGIN
+================================ */
+router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const teacher = await Teacher.findOne({ email });
-    if (!teacher || teacher.password !== password) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password required." });
     }
 
-    res.json(teacher);
+    const teacher = await Teacher.findOne({ email });
+    if (!teacher) {
+      return res.status(401).json({ message: "Invalid credentials." });
+    }
+
+    const isMatch = await bcrypt.compare(password, teacher.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid credentials." });
+    }
+
+    res.json({
+      _id: teacher._id,
+      name: teacher.name,
+      email: teacher.email,
+      subject: teacher.subject,
+    });
+
   } catch (err) {
-    res.status(500).json({ message: 'Server error' });
+    console.error("LOGIN ERROR:", err);
+    res.status(500).json({ message: "Login failed." });
   }
 });
 

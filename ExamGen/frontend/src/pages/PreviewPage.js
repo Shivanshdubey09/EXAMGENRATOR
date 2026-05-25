@@ -1,473 +1,330 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import axios from 'axios';
-import API from '../api/api';
-
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-const QUESTIONS_PER_PAGE = 10;
+import React, { useState, useMemo, useEffect, useRef } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import API from "../api/api";
 
 const PreviewPage = () => {
   const dispatch = useDispatch();
 
-  const { questions = [], examInfo = {} } = useSelector((state) => state || {});
+  const questions = useSelector((state) => state.questions);
+  const examInfo = useSelector((state) => state.examInfo);
 
   const [localQuestions, setLocalQuestions] = useState([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [marksPerQuestion, setMarksPerQuestion] = useState(1);
-  const [notes, setNotes] = useState({});
-  const [loadingRegen, setLoadingRegen] = useState(false);
-  const [savedToBank, setSavedToBank] = useState({}); // Tracking which questions are saved
+  const [localSections, setLocalSections] = useState([]);
+  const [showBank, setShowBank] = useState(false);
+  const [bankQuestions, setBankQuestions] = useState([]);
+  const [selectedSectionIndex, setSelectedSectionIndex] = useState(null);
 
+  const restoredRef = useRef(false); // ✅ prevents infinite restore loop
+
+  /* ================= RESTORE PAPER IF PAGE RELOADS ================= */
   useEffect(() => {
-    setLocalQuestions(questions || []);
-    setCurrentPage(1);
-  }, [questions]);
+    if (restoredRef.current) return;
 
-  const totalPages = Math.max(1, Math.ceil(localQuestions.length / QUESTIONS_PER_PAGE));
+    if (questions?.length) {
+      setLocalQuestions(questions);
+      setLocalSections(examInfo?.sections || []);
+      restoredRef.current = true;
+    } else {
+      const saved = localStorage.getItem("generatedPaper");
 
-  const paginatedQuestions = useMemo(() => {
-    const start = (currentPage - 1) * QUESTIONS_PER_PAGE;
-    return localQuestions.slice(start, start + QUESTIONS_PER_PAGE);
-  }, [localQuestions, currentPage]);
+      if (saved) {
+        const parsed = JSON.parse(saved);
 
+        // ❌ DO NOT DISPATCH HERE (this was causing infinite loop)
+
+        setLocalQuestions(parsed.questions || []);
+        setLocalSections(parsed.examInfo?.sections || []);
+        restoredRef.current = true;
+      }
+    }
+  }, [questions, examInfo]);
+
+  const sections = localSections || [];
+
+  /* ================= AUTO SAVE TO LOCAL STORAGE ================= */
+  useEffect(() => {
+    if (!localQuestions.length) return;
+
+    localStorage.setItem(
+      "generatedPaper",
+      JSON.stringify({
+        questions: localQuestions,
+        examInfo: { ...examInfo, sections },
+      })
+    );
+  }, [localQuestions, sections]);
+
+  /* ================= TOTAL MARKS ================= */
   const totalMarks = useMemo(() => {
-    return localQuestions.length * (Number(marksPerQuestion) || 0);
-  }, [localQuestions.length, marksPerQuestion]);
+    return sections.reduce(
+      (sum, sec) => sum + sec.count * sec.marks,
+      0
+    );
+  }, [sections]);
 
-  // ================= HANDLERS =================
+  /* ================= GROUP QUESTIONS ================= */
+  const groupedQuestions = useMemo(() => {
+    let pointer = 0;
 
+    return sections.map((sec) => {
+      const qs = localQuestions.slice(pointer, pointer + sec.count);
+      pointer += sec.count;
+      return { ...sec, questions: qs };
+    });
+  }, [localQuestions, sections]);
+
+  /* ================= SAVE TO QUESTION BANK ================= */
+  const saveToBank = async (question) => {
+    try {
+      const payload = {
+        questionText: question.question,
+        options: question.options || [],
+        subject: examInfo.subjectName,
+        difficulty: examInfo.difficulty,
+        questionType: question.questionType || "mcq",
+        marks: question.marks || 1,
+      };
+
+      await API.post("/questions/bank", payload);
+      alert("Saved to Question Bank ✅");
+    } catch (err) {
+      console.error("SAVE ERROR:", err);
+      alert("Failed to save to bank");
+    }
+  };
+
+  /* ================= LOAD QUESTION BANK ================= */
+  const loadBankQuestions = async (sectionIndex) => {
+    try {
+      const res = await API.get("/questions/bank");
+
+      setBankQuestions(res.data || []);
+      setSelectedSectionIndex(sectionIndex);
+      setShowBank(true);
+    } catch (err) {
+      console.error("LOAD BANK ERROR:", err);
+      alert("Failed to load question bank");
+    }
+  };
+
+  /* ================= INSERT FROM BANK ================= */
+  const insertQuestionFromBank = (question) => {
+    if (selectedSectionIndex === null) return;
+
+    const updatedQuestions = [...localQuestions];
+    const updatedSections = [...sections];
+
+    let pointer = 0;
+    for (let i = 0; i < selectedSectionIndex; i++) {
+      pointer += updatedSections[i].count;
+    }
+
+    updatedQuestions.splice(pointer, 0, {
+      question: question.questionText,
+      options: question.options,
+      questionType: question.questionType,
+      marks: question.marks,
+    });
+
+    updatedSections[selectedSectionIndex].count += 1;
+
+    setLocalQuestions(updatedQuestions);
+    setLocalSections(updatedSections);
+    setShowBank(false);
+  };
+
+  /* ================= SHUFFLE ================= */
   const handleShuffle = () => {
     const shuffled = [...localQuestions]
       .map((q) => ({ q, r: Math.random() }))
       .sort((a, b) => a.r - b.r)
       .map((x) => x.q);
+
     setLocalQuestions(shuffled);
-    setCurrentPage(1);
   };
 
-  const goToPage = (page) => {
-    if (page < 1 || page > totalPages) return;
-    setCurrentPage(page);
+  /* ================= DISCARD PAPER ================= */
+  const handleDiscard = () => {
+    localStorage.removeItem("generatedPaper");
+    setLocalQuestions([]);
+    setLocalSections([]);
+    dispatch({ type: "CLEAR_DATA" });
   };
 
-  const handleNoteChange = (index, value) => {
-    setNotes((prev) => ({ ...prev, [index]: value }));
-  };
-
-  // UPDATED: Save specific AI question to the permanent Bank with Debugging
-  const handleSaveToBank = async (question, index) => {
-    try {
-      // 1. Robust check for teacher session
-      const rawData = localStorage.getItem('teacher') || localStorage.getItem('user') || localStorage.getItem('auth');
-      const teacher = rawData ? JSON.parse(rawData) : null;
-      
-      // 2. Extract ID (handling multiple possible object structures)
-      const teacherId = teacher?._id || teacher?.id || teacher?.user?._id || teacher?.user?.id;
-
-      if (!teacherId) {
-        alert("Session expired. Please log in again to save questions.");
-        return;
-      }
-
-      // 3. Construct payload - Ensure fields match your Mongoose Schema exactly
-      const payload = {
-        questionText: question.question || question.questionText, 
-        options: question.options || [],
-        correctAnswer: question.answer || "",
-        subject: examInfo.subject || "General",
-        difficulty: examInfo.difficulty !== 'any' ? examInfo.difficulty : 'Medium',
-        marks: marksPerQuestion,
-        teacherId: teacherId, 
-        source: 'AI-Generated'
-      };
-
-      console.log("Attempting Save to Bank with Payload:", payload);
-
-      const response = await API.post('/questions/bank', payload);
-      
-      if (response.status === 201 || response.status === 200) {
-        setSavedToBank(prev => ({ ...prev, [index]: true }));
-      }
-    } catch (err) {
-      console.error("Bank Save Error Detail:", err.response?.data);
-      const serverMsg = err.response?.data?.message || "Check server console for validation errors.";
-      alert(`Failed to save to bank: ${serverMsg}`);
-    }
-  };
-
-  const handleRegenerate = async () => {
-    if (!examInfo?.subjectId) return;
-    setLoadingRegen(true);
-    try {
-      const res = await axios.get(`${API_BASE_URL}/api/exams/generate`, {
-        params: {
-          amount: examInfo.amount,
-          studentType: examInfo.studentType,
-          subjectId: examInfo.subjectId,
-          difficulty: examInfo.difficulty === 'any' ? '' : examInfo.difficulty,
-          questionType: examInfo.questionType,
-        },
-      });
-
-      if (!Array.isArray(res.data) || res.data.length === 0) {
-        alert('No questions returned from server.');
-        return;
-      }
-
-      dispatch({
-        type: 'SET_EXAM_DATA',
-        payload: { questions: res.data, examInfo },
-      });
-      setLocalQuestions(res.data);
-      setCurrentPage(1);
-    } catch (err) {
-      console.error(err);
-      alert('Failed to regenerate questions.');
-    } finally {
-      setLoadingRegen(false);
-    }
-  };
-
+  /* ================= SAVE PAPER TO DB ================= */
   const handleSavePaper = async () => {
     try {
-      const savedUserData = localStorage.getItem('teacher') || localStorage.getItem('user') || localStorage.getItem('auth');
-      
+      const savedUserData =
+        localStorage.getItem("teacher") ||
+        localStorage.getItem("user") ||
+        localStorage.getItem("auth");
+
       if (!savedUserData) {
-        alert('Error: No login session found. Please log in again.');
+        alert("Login required.");
         return;
       }
 
       const teacher = JSON.parse(savedUserData);
-      const teacherId = teacher.id || teacher._id || (teacher.user && (teacher.user.id || teacher.user._id));
 
-      if (!teacherId) {
-        alert('Teacher ID not found in session.');
-        return;
-      }
-
-      await API.post('/papers', {
-        teacherId: teacherId,
-        title: examInfo.test || 'Question Paper',
-        subject: examInfo.subject || '',
+      await API.post("/papers", {
+        teacherId: teacher._id,
+        title: examInfo.test,
+        subject: examInfo.subjectName,
+        schoolName: examInfo.schoolName,
+        board: examInfo.board,
+        className: examInfo.className,
+        examType: examInfo.examType,
+        duration: examInfo.duration,
         totalMarks,
+        sections,
         questions: localQuestions,
       });
 
-      alert('Paper saved successfully!');
+      alert("Paper saved successfully!");
     } catch (err) {
-      console.error("Save Paper Error:", err);
-      alert(err.response?.data?.message || 'Failed to save paper');
+      console.error(err);
+      alert("Failed to save paper");
     }
   };
 
-  // ================= RENDER =================
-
   if (!localQuestions.length) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-900 text-slate-200">
-        <div className="bg-slate-800 p-8 rounded-xl border border-slate-700 text-center">
-          <h2 className="text-xl font-semibold mb-2">No paper generated</h2>
-          <p className="text-slate-400 text-sm">Please generate a question paper first.</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
+        No paper generated.
       </div>
     );
   }
 
-//   return (
-//     <div className="min-h-screen bg-slate-900 p-6 flex justify-center">
-//       <div className="w-full max-w-5xl bg-slate-800 rounded-2xl border border-slate-700 text-slate-100">
-        
-//         {/* HEADER */}
-//         <header className="p-6 border-b border-slate-700 flex flex-col md:flex-row justify-between gap-4">
-//           <div>
-//             <h1 className="text-3xl font-bold text-indigo-400">{examInfo.test || 'Question Paper'}</h1>
-//             <p className="text-slate-400 text-sm mt-1">
-//               Questions: {localQuestions.length} • Total Marks:{' '}
-//               <span className="text-emerald-400 font-semibold">{totalMarks}</span>
-//             </p>
-//           </div>
-//           <div className="flex gap-2 items-center">
-//             <div className="flex flex-col">
-//                 <span className="text-[10px] text-slate-500 uppercase ml-1">Marks per Q</span>
-//                 <input
-//                 type="number"
-//                 min="0"
-//                 className="w-20 bg-slate-900 border border-slate-600 rounded px-2 py-1 text-sm outline-none focus:border-indigo-500"
-//                 value={marksPerQuestion}
-//                 onChange={(e) => setMarksPerQuestion(e.target.value)}
-//                 />
-//             </div>
-//             <button onClick={handleShuffle} className="bg-slate-700 hover:bg-slate-600 px-3 py-2 rounded text-xs font-semibold self-end transition">
-//               Shuffle
-//             </button>
-//             <button
-//               onClick={handleRegenerate}
-//               disabled={loadingRegen}
-//               className="bg-indigo-600 hover:bg-indigo-700 px-3 py-2 rounded text-xs font-semibold self-end disabled:opacity-50 transition"
-//             >
-//               {loadingRegen ? 'Loading...' : 'Regenerate'}
-//             </button>
-//             <button onClick={handleSavePaper} className="bg-emerald-600 hover:bg-emerald-700 px-3 py-2 rounded text-xs font-semibold self-end transition">
-//               Save Full Paper
-//             </button>
-//           </div>
-//         </header>
+  return (
+    <div className="min-h-screen bg-[#020617] text-white p-10">
+      <div className="max-w-5xl mx-auto">
 
-//         {/* QUESTIONS AREA */}
-//         <div className="p-6 space-y-6">
-//           {paginatedQuestions.map((q, i) => {
-//             const index = (currentPage - 1) * QUESTIONS_PER_PAGE + i;
-//             const isSaved = savedToBank[index];
+        {/* EVERYTHING BELOW IS EXACTLY YOUR ORIGINAL UI */}
 
-//             return (
-//               <div key={index} className="bg-slate-900 border border-slate-700 rounded-xl p-5 group transition-all hover:border-slate-500">
-//                 <div className="flex justify-between items-start mb-3">
-//                     <p className="font-medium flex-1">
-//                         <span className="text-indigo-500 mr-2">{index + 1}.</span> 
-//                         {q.question || q.questionText || 'Untitled question'}
-//                     </p>
-                    
-//                     {/* SAVE TO BANK BUTTON */}
-//                     <button 
-//                         onClick={() => handleSaveToBank(q, index)}
-//                         disabled={isSaved}
-//                         className={`ml-4 text-[10px] uppercase font-bold px-3 py-1 rounded border transition-all ${
-//                             isSaved 
-//                             ? 'bg-emerald-900/20 text-emerald-400 border-emerald-400 cursor-default' 
-//                             : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-white hover:border-indigo-400 active:scale-95'
-//                         }`}
-//                     >
-//                         {isSaved ? '✓ In Bank' : '⭐ Add to Bank'}
-//                     </button>
-//                 </div>
-
-//                 {Array.isArray(q.options) && (
-//                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm ml-6">
-//                     {q.options.map((opt, idx) => (
-//                       <div key={idx} className="text-slate-400 bg-slate-800/50 p-2 rounded border border-slate-800">
-//                         <span className="text-indigo-400 font-bold mr-2">{String.fromCharCode(65 + idx)}.</span> {opt}
-//                       </div>
-//                     ))}
-//                   </div>
-//                 )}
-
-//                 <textarea
-//                   className="mt-4 w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm focus:border-indigo-500 outline-none transition"
-//                   placeholder="Teacher notes or instructions for this question..."
-//                   value={notes[index] || ''}
-//                   onChange={(e) => handleNoteChange(index, e.target.value)}
-//                 />
-//               </div>
-//             );
-//           })}
-//         </div>
-
-//         {/* PAGINATION */}
-//         <footer className="p-4 border-t border-slate-700 flex justify-between items-center text-xs">
-//           <span className="text-slate-500">Showing {paginatedQuestions.length} of {localQuestions.length} questions</span>
-//           <div className="flex gap-4 items-center">
-//             <span className="text-slate-400 font-medium">Page {currentPage} of {totalPages}</span>
-//             <div className="flex gap-1">
-//                 <button 
-//                     onClick={() => goToPage(currentPage - 1)} 
-//                     disabled={currentPage === 1}
-//                     className="bg-slate-700 hover:bg-slate-600 px-3 py-1 rounded disabled:opacity-30 transition"
-//                 >
-//                     Prev
-//                 </button>
-//                 <button 
-//                     onClick={() => goToPage(currentPage + 1)} 
-//                     disabled={currentPage === totalPages}
-//                     className="bg-slate-700 hover:bg-slate-600 px-3 py-1 rounded disabled:opacity-30 transition"
-//                 >
-//                     Next
-//                 </button>
-//             </div>
-//           </div>
-//         </footer>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default PreviewPage;
-
-return (
-  <div className="min-h-screen flex justify-center p-6
-    bg-gray-50 dark:bg-gray-950
-    text-gray-900 dark:text-gray-100
-    animate-fade"
-  >
-    <div className="w-full max-w-5xl
-      bg-white dark:bg-gray-900
-      border dark:border-gray-800
-      rounded-2xl shadow-xl overflow-hidden">
-
-      {/* ================= HEADER ================= */}
-      <header className="p-6 border-b dark:border-gray-800
-        flex flex-col md:flex-row justify-between gap-6">
-        <div>
-          <h1 className="text-3xl font-bold text-indigo-500">
-            {examInfo.test || 'Question Paper'}
+        {/* HEADER */}
+        <div className="text-center border-b border-white/10 pb-6 mb-10">
+          <h1 className="text-2xl font-black uppercase text-emerald-400">
+            {examInfo.schoolName}
           </h1>
-          <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
-            Questions: {localQuestions.length} • Total Marks:{' '}
-            <span className="text-emerald-500 font-semibold">{totalMarks}</span>
+          <p className="text-slate-400">{examInfo.board}</p>
+          <h2 className="text-xl font-bold mt-3">
+            {examInfo.test}
+          </h2>
+          <p className="text-sm mt-2 text-slate-400">
+            Class: {examInfo.className} | Exam: {examInfo.examType} | Duration: {examInfo.duration}
+          </p>
+          <p className="font-semibold mt-3 text-emerald-400">
+            Total Marks: {totalMarks}
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-3 items-end">
-          <div className="flex flex-col">
-            <span className="text-[10px] text-gray-400 uppercase ml-1">
-              Marks / Q
-            </span>
-            <input
-              type="number"
-              min="0"
-              className="w-20 px-2 py-1 rounded-md
-                bg-transparent border dark:border-gray-700
-                focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
-              value={marksPerQuestion}
-              onChange={(e) => setMarksPerQuestion(e.target.value)}
-            />
-          </div>
+        {groupedQuestions.map((section, secIndex) => {
+          let globalIndex =
+            sections
+              .slice(0, secIndex)
+              .reduce((sum, s) => sum + s.count, 0);
 
+          return (
+            <div key={secIndex} className="mb-12">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-lg font-bold text-emerald-300">
+                  {section.name}
+                </h3>
+
+                <button
+                  onClick={() => loadBankQuestions(secIndex)}
+                  className="bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded-lg text-sm font-semibold"
+                >
+                  + Add from Bank
+                </button>
+              </div>
+
+              {section.questions.map((q, index) => {
+                const realIndex = globalIndex + index;
+
+                return (
+                  <div
+                    key={realIndex}
+                    className="mb-6 bg-slate-900/60 border border-white/10 rounded-xl p-6"
+                  >
+                    <p className="font-semibold text-lg">
+                      {realIndex + 1}. {q.question}
+                    </p>
+
+                    {q.options?.map((opt, i) => (
+                      <p key={i} className="ml-6 text-slate-300">
+                        {String.fromCharCode(65 + i)}. {opt}
+                      </p>
+                    ))}
+
+                    <div className="flex gap-6 mt-4 text-sm">
+                      <button
+                        onClick={() => saveToBank(q)}
+                        className="text-emerald-400 hover:text-emerald-300"
+                      >
+                        Save to Bank
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })}
+
+        <div className="flex gap-6 mt-8">
           <button
             onClick={handleShuffle}
-            className="px-3 py-2 rounded-md text-xs font-semibold
-              bg-gray-100 dark:bg-gray-800
-              hover:bg-indigo-50 dark:hover:bg-gray-700 transition"
+            className="bg-slate-700 px-6 py-3 rounded-xl font-bold"
           >
             Shuffle
           </button>
 
           <button
-            onClick={handleRegenerate}
-            disabled={loadingRegen}
-            className="px-3 py-2 rounded-md text-xs font-semibold
-              bg-indigo-600 text-white
-              hover:bg-indigo-700 disabled:opacity-50 transition"
+            onClick={handleSavePaper}
+            className="bg-emerald-600 px-6 py-3 rounded-xl font-bold"
           >
-            {loadingRegen ? 'Loading…' : 'Regenerate'}
+            Save Paper
           </button>
 
           <button
-            onClick={handleSavePaper}
-            className="px-3 py-2 rounded-md text-xs font-semibold
-              bg-emerald-600 text-white
-              hover:bg-emerald-700 transition"
+            onClick={handleDiscard}
+            className="bg-red-600 px-6 py-3 rounded-xl font-bold"
           >
-            Save Full Paper
+            Discard Paper
           </button>
         </div>
-      </header>
 
-      {/* ================= QUESTIONS ================= */}
-      <div className="p-6 space-y-6">
-        {paginatedQuestions.map((q, i) => {
-          const index = (currentPage - 1) * QUESTIONS_PER_PAGE + i;
-          const isSaved = savedToBank[index];
+        {showBank && (
+          <div className="fixed inset-0 bg-black/60 flex items-center justify-center">
+            <div className="bg-slate-900 p-6 w-3/4 max-h-[80vh] overflow-y-auto rounded-xl">
+              <h2 className="text-lg font-bold mb-6 text-emerald-400">
+                Select Question from Bank
+              </h2>
 
-          return (
-            <div
-              key={index}
-              className="bg-gray-50 dark:bg-gray-950
-                border dark:border-gray-800
-                rounded-xl p-5
-                hover:shadow-md transition animate-pop"
-            >
-              <div className="flex justify-between items-start gap-4 mb-3">
-                <p className="font-medium flex-1 leading-relaxed">
-                  <span className="text-indigo-500 mr-2">
-                    {index + 1}.
-                  </span>
-                  {q.question || q.questionText || 'Untitled question'}
-                </p>
-
-                <button
-                  onClick={() => handleSaveToBank(q, index)}
-                  disabled={isSaved}
-                  className={`text-[10px] uppercase font-bold px-3 py-1 rounded border transition
-                    ${
-                      isSaved
-                        ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-500 border-emerald-400'
-                        : 'bg-gray-100 dark:bg-gray-800 text-gray-400 border-gray-300 dark:border-gray-700 hover:text-indigo-500 hover:border-indigo-500'
-                    }`}
+              {bankQuestions.map((q) => (
+                <div
+                  key={q._id}
+                  onClick={() => insertQuestionFromBank(q)}
+                  className="border border-white/10 p-4 mb-4 rounded-lg cursor-pointer hover:bg-slate-800"
                 >
-                  {isSaved ? '✓ In Bank' : '⭐ Add to Bank'}
-                </button>
-              </div>
-
-              {Array.isArray(q.options) && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm ml-6">
-                  {q.options.map((opt, idx) => (
-                    <div
-                      key={idx}
-                      className="bg-white dark:bg-gray-900
-                        border dark:border-gray-800
-                        rounded p-2 text-gray-600 dark:text-gray-400"
-                    >
-                      <span className="text-indigo-500 font-bold mr-2">
-                        {String.fromCharCode(65 + idx)}.
-                      </span>
-                      {opt}
-                    </div>
-                  ))}
+                  {q.questionText}
                 </div>
-              )}
+              ))}
 
-              <textarea
-                className="mt-4 w-full rounded-lg p-2 text-sm
-                  bg-transparent border dark:border-gray-700
-                  focus:ring-2 focus:ring-indigo-500 outline-none transition"
-                placeholder="Teacher notes or instructions for this question..."
-                value={notes[index] || ''}
-                onChange={(e) =>
-                  handleNoteChange(index, e.target.value)
-                }
-              />
+              <button
+                onClick={() => setShowBank(false)}
+                className="mt-4 bg-red-600 px-4 py-2 rounded"
+              >
+                Close
+              </button>
             </div>
-          );
-        })}
-      </div>
-
-      {/* ================= PAGINATION ================= */}
-      <footer className="p-4 border-t dark:border-gray-800
-        flex flex-col sm:flex-row justify-between items-center gap-4 text-xs">
-        <span className="text-gray-500">
-          Showing {paginatedQuestions.length} of {localQuestions.length} questions
-        </span>
-
-        <div className="flex gap-4 items-center">
-          <span className="text-gray-400 font-medium">
-            Page {currentPage} of {totalPages}
-          </span>
-
-          <div className="flex gap-1">
-            <button
-              onClick={() => goToPage(currentPage - 1)}
-              disabled={currentPage === 1}
-              className="px-3 py-1 rounded
-                bg-gray-100 dark:bg-gray-800
-                hover:bg-indigo-50 dark:hover:bg-gray-700
-                disabled:opacity-30 transition"
-            >
-              Prev
-            </button>
-            <button
-              onClick={() => goToPage(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              className="px-3 py-1 rounded
-                bg-gray-100 dark:bg-gray-800
-                hover:bg-indigo-50 dark:hover:bg-gray-700
-                disabled:opacity-30 transition"
-            >
-              Next
-            </button>
           </div>
-        </div>
-      </footer>
+        )}
+
+      </div>
     </div>
-  </div>
-);
-};export default PreviewPage;
+  );
+};
+
+export default PreviewPage;

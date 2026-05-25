@@ -11,14 +11,21 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "@google/generative-ai": "^0.24.1",
-    "axios": "^1.13.2",
+    "@google/genai": "^1.42.0",
+    "axios": "^1.13.5",
+    "bcryptjs": "^3.0.3",
     "body-parser": "^2.2.1",
     "cors": "^2.8.5",
-    "dotenv": "^17.2.3",
+    "crypto": "^1.0.1",
+    "dotenv": "^17.3.1",
     "express": "^5.2.1",
-    "mongoose": "^9.0.2",
-    "multer": "^2.0.2"
+    "mammoth": "^1.11.0",
+    "mongoose": "^9.2.1",
+    "multer": "^2.0.2",
+    "nodemailer": "^8.0.1",
+    "pdf-parse": "^1.1.1",
+    "pdfkit": "^0.17.2",
+    "tesseract.js": "^7.0.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.11"

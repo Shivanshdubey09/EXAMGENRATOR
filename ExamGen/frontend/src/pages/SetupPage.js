@@ -1,878 +1,643 @@
-// // import React, { useState, useMemo, useEffect } from 'react';
-// // import axios from 'axios';
-// // import { useDispatch } from 'react-redux';
-// // import { useNavigate } from 'react-router-dom';
-
-// // const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-
-// // const studentTypes = [
-// //   { id: 'class10', name: 'Class 10' },
-// //   { id: 'class12', name: 'Class 12' },
-// //   { id: 'engineering', name: 'Engineering' },
-// // ];
-
-// // const subjectsByType = {
-// //   class10: [
-// //     { id: 'maths', name: 'Mathematics' },
-// //     { id: 'science', name: 'Science' },
-// //     { id: 'sst', name: 'Social Science' },
-// //     { id: 'english', name: 'English' },
-// //     { id: 'hindi', name: 'Hindi' },
-// //   ],
-// //   class12: [
-// //     { id: 'pcm_maths', name: 'Mathematics' },
-// //     { id: 'pcm_physics', name: 'Physics' },
-// //     { id: 'pcm_chemistry', name: 'Chemistry' },
-// //     { id: 'commerce_accounts', name: 'Accountancy' },
-// //     { id: 'commerce_business', name: 'Business Studies' },
-// //     { id: 'english', name: 'English' },
-// //   ],
-// //   engineering: [
-// //     { id: 'eng_maths', name: 'Engineering Mathematics' },
-// //     { id: 'ds_algo', name: 'Data Structures & Algorithms' },
-// //     { id: 'os', name: 'Operating Systems' },
-// //     { id: 'dbms', name: 'DBMS' },
-// //     { id: 'cn', name: 'Computer Networks' },
-// //     { id: 'edc', name: 'Electronics / EDC' },
-// //     { id: 'signals', name: 'Signals & Systems' },
-// //   ],
-// // };
-
-// // const difficulties = [
-// //   { id: 'any', name: 'Any Difficulty' },
-// //   { id: 'easy', name: 'Easy' },
-// //   { id: 'medium', name: 'Medium' },
-// //   { id: 'hard', name: 'Hard' },
-// // ];
-
-// // const questionTypes = [
-// //   { id: 'mcq', name: 'Multiple Choice (MCQ)' },
-// //   { id: 'true_false', name: 'True / False' },
-// //   { id: 'fill_blank', name: 'Fill in the Blanks' },
-// // ];
-
-// // const GeneratorPage = () => {
-// //   const [form, setForm] = useState({
-// //     test: '',
-// //     amount: 10,
-// //     studentType: 'engineering',
-// //     subject: 'eng_maths',
-// //     difficulty: 'easy',
-// //     questionType: 'mcq',
-// //   });
-
-// //   const [loading, setLoading] = useState(false);
-// //   const dispatch = useDispatch();
-// //   const navigate = useNavigate();
-
-// //   const subjectOptions = useMemo(
-// //     () => subjectsByType[form.studentType] || [],
-// //     [form.studentType]
-// //   );
-
-// //   /* 🔁 Ensure valid subject when studentType changes */
-// //   useEffect(() => {
-// //     if (!subjectOptions.some((s) => s.id === form.subject)) {
-// //       setForm((prev) => ({
-// //         ...prev,
-// //         subject: subjectOptions[0]?.id || '',
-// //       }));
-// //     }
-// //   }, [subjectOptions, form.subject]);
-
-// //   const fetchQuestions = async (e) => {
-// //     e.preventDefault();
-
-// //     if (!form.test.trim()) {
-// //       return alert('Please enter a test name.');
-// //     }
-
-// //     const amountNum = Number(form.amount);
-// //     if (!amountNum || amountNum < 1 || amountNum > 50) {
-// //       return alert('Number of questions must be between 1 and 50.');
-// //     }
-
-// //     if (!form.subject) {
-// //       return alert('Please select a subject.');
-// //     }
-
-// //     setLoading(true);
-// //     try {
-// //       const res = await axios.get(
-// //         `${API_BASE_URL}/api/exams/generate`,
-// //         {
-// //           params: {
-// //             amount: amountNum,
-// //             studentType: form.studentType,
-// //             subjectId: form.subject,
-// //             difficulty: form.difficulty === 'any' ? '' : form.difficulty,
-// //             questionType: form.questionType,
-// //           },
-// //         }
-// //       );
-
-// //       if (!Array.isArray(res.data) || res.data.length === 0) {
-// //         alert('No questions generated. Try another configuration.');
-// //         return;
-// //       }
-
-// //       const studentTypeInfo = studentTypes.find(
-// //         (t) => t.id === form.studentType
-// //       );
-// //       const subjectInfo = subjectOptions.find(
-// //         (s) => s.id === form.subject
-// //       );
-
-// //       dispatch({
-// //         type: 'SET_DATA',
-// //         payload: {
-// //           questions: res.data,
-// //           info: {
-// //             test: form.test,
-// //             amount: amountNum,
-// //             studentType: form.studentType,
-// //             studentTypeName: studentTypeInfo?.name || 'General',
-// //             subjectId: form.subject,
-// //             subjectName: subjectInfo?.name || 'Mixed',
-// //             difficulty: form.difficulty,
-// //             questionType: form.questionType,
-// //           },
-// //         },
-// //       });
-
-// //       navigate('/preview');
-// //     } catch (err) {
-// //       console.error(err);
-// //       alert('Backend not reachable. Is server running?');
-// //     } finally {
-// //       setLoading(false);
-// //     }
-// //   };
-
-// // //   return (
-// // //     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6 flex justify-center items-center">
-// // //       <div className="bg-slate-800/90 p-10 rounded-2xl shadow-2xl w-full max-w-2xl border border-slate-700">
-// // //         <h2 className="text-white text-3xl font-bold mb-2 text-center">
-// // //           Question Generator
-// // //         </h2>
-
-// // //         <form
-// // //           onSubmit={fetchQuestions}
-// // //           className="grid grid-cols-1 md:grid-cols-2 gap-6"
-// // //         >
-// // //           <input
-// // //             required
-// // //             placeholder="Test Name"
-// // //             className="md:col-span-2 bg-slate-900 p-3 rounded-lg text-white"
-// // //             value={form.test}
-// // //             onChange={(e) =>
-// // //               setForm({ ...form, test: e.target.value })
-// // //             }
-// // //           />
-
-// // //           <select
-// // //             value={form.studentType}
-// // //             onChange={(e) =>
-// // //               setForm({ ...form, studentType: e.target.value })
-// // //             }
-// // //           >
-// // //             {studentTypes.map((t) => (
-// // //               <option key={t.id} value={t.id}>
-// // //                 {t.name}
-// // //               </option>
-// // //             ))}
-// // //           </select>
-
-// // //           <select
-// // //             value={form.subject}
-// // //             onChange={(e) =>
-// // //               setForm({ ...form, subject: e.target.value })
-// // //             }
-// // //           >
-// // //             {subjectOptions.map((s) => (
-// // //               <option key={s.id} value={s.id}>
-// // //                 {s.name}
-// // //               </option>
-// // //             ))}
-// // //           </select>
-
-// // //           <select
-// // //             value={form.difficulty}
-// // //             onChange={(e) =>
-// // //               setForm({ ...form, difficulty: e.target.value })
-// // //             }
-// // //           >
-// // //             {difficulties.map((d) => (
-// // //               <option key={d.id} value={d.id}>
-// // //                 {d.name}
-// // //               </option>
-// // //             ))}
-// // //           </select>
-
-// // //           <select
-// // //             value={form.questionType}
-// // //             onChange={(e) =>
-// // //               setForm({ ...form, questionType: e.target.value })
-// // //             }
-// // //           >
-// // //             {questionTypes.map((q) => (
-// // //               <option key={q.id} value={q.id}>
-// // //                 {q.name}
-// // //               </option>
-// // //             ))}
-// // //           </select>
-
-// // //           <input
-// // //             type="number"
-// // //             min={1}
-// // //             max={50}
-// // //             value={form.amount}
-// // //             onChange={(e) =>
-// // //               setForm({ ...form, amount: Number(e.target.value) })
-// // //             }
-// // //           />
-
-// // //           <button
-// // //             disabled={loading}
-// // //             className="md:col-span-2 bg-indigo-600 py-3 rounded-lg text-white"
-// // //           >
-// // //             {loading ? 'Generating...' : 'Generate Questions'}
-// // //           </button>
-// // //         </form>
-// // //       </div>
-// // //     </div>
-// // //   );
-// // // };
-
-
-// // // export default GeneratorPage;
-
-// // return (
-// //   <div
-// //     className="min-h-screen flex items-center justify-center p-6
-// //     bg-gray-50 dark:bg-gray-950
-// //     text-gray-900 dark:text-gray-100
-// //     animate-slide"
-// //   >
-// //     <div
-// //       className="w-full max-w-2xl
-// //       bg-white dark:bg-gray-900
-// //       border dark:border-gray-800
-// //       rounded-2xl shadow-2xl p-8"
-// //     >
-// //       {/* HEADER */}
-// //       <h2 className="text-3xl font-bold mb-2 text-center">
-// //         Question Generator
-// //       </h2>
-// //       <p className="text-center text-gray-500 dark:text-gray-400 mb-8">
-// //         Configure your exam and generate questions instantly
-// //       </p>
-
-// //       <form
-// //         onSubmit={fetchQuestions}
-// //         className="grid grid-cols-1 md:grid-cols-2 gap-6"
-// //       >
-// //         {/* TEST NAME */}
-// //         <input
-// //           required
-// //           placeholder="Test Name"
-// //           className="md:col-span-2 px-4 py-3 rounded-lg
-// //             bg-transparent border dark:border-gray-700
-// //             focus:ring-2 focus:ring-indigo-500 outline-none"
-// //           value={form.test}
-// //           onChange={(e) =>
-// //             setForm({ ...form, test: e.target.value })
-// //           }
-// //         />
-
-// //         {/* STUDENT TYPE */}
-// //         <select
-// //           value={form.studentType}
-// //           onChange={(e) =>
-// //             setForm({ ...form, studentType: e.target.value })
-// //           }
-// //           className="px-4 py-3 rounded-lg
-// //             bg-transparent border dark:border-gray-700
-// //             focus:ring-2 focus:ring-indigo-500 outline-none"
-// //         >
-// //           {studentTypes.map((t) => (
-// //             <option key={t.id} value={t.id}>
-// //               {t.name}
-// //             </option>
-// //           ))}
-// //         </select>
-
-// //         {/* SUBJECT */}
-// //         <select
-// //           value={form.subject}
-// //           onChange={(e) =>
-// //             setForm({ ...form, subject: e.target.value })
-// //           }
-// //           className="px-4 py-3 rounded-lg
-// //             bg-transparent border dark:border-gray-700
-// //             focus:ring-2 focus:ring-indigo-500 outline-none"
-// //         >
-// //           {subjectOptions.map((s) => (
-// //             <option key={s.id} value={s.id}>
-// //               {s.name}
-// //             </option>
-// //           ))}
-// //         </select>
-
-// //         {/* DIFFICULTY */}
-// //         <select
-// //           value={form.difficulty}
-// //           onChange={(e) =>
-// //             setForm({ ...form, difficulty: e.target.value })
-// //           }
-// //           className="px-4 py-3 rounded-lg
-// //             bg-transparent border dark:border-gray-700
-// //             focus:ring-2 focus:ring-indigo-500 outline-none"
-// //         >
-// //           {difficulties.map((d) => (
-// //             <option key={d.id} value={d.id}>
-// //               {d.name}
-// //             </option>
-// //           ))}
-// //         </select>
-
-// //         {/* QUESTION TYPE */}
-// //         <select
-// //           value={form.questionType}
-// //           onChange={(e) =>
-// //             setForm({ ...form, questionType: e.target.value })
-// //           }
-// //           className="px-4 py-3 rounded-lg
-// //             bg-transparent border dark:border-gray-700
-// //             focus:ring-2 focus:ring-indigo-500 outline-none"
-// //         >
-// //           {questionTypes.map((q) => (
-// //             <option key={q.id} value={q.id}>
-// //               {q.name}
-// //             </option>
-// //           ))}
-// //         </select>
-
-// //         {/* NUMBER OF QUESTIONS */}
-// //         <input
-// //           type="number"
-// //           min={1}
-// //           max={50}
-// //           value={form.amount}
-// //           onChange={(e) =>
-// //             setForm({ ...form, amount: Number(e.target.value) })
-// //           }
-// //           className="px-4 py-3 rounded-lg
-// //             bg-transparent border dark:border-gray-700
-// //             focus:ring-2 focus:ring-indigo-500 outline-none"
-// //         />
-
-// //         {/* SUBMIT */}
-// //         <button
-// //           disabled={loading}
-// //           className="md:col-span-2 px-6 py-3 rounded-xl
-// //             bg-indigo-600 text-white font-semibold
-// //             hover:bg-indigo-700 hover:scale-[1.02]
-// //             disabled:opacity-60 disabled:cursor-not-allowed
-// //             transition"
-// //         >
-// //           {loading ? 'Generating...' : 'Generate Questions'}
-// //         </button>
-// //       </form>
-// //     </div>
-// //   </div>
-// // );
-// // };
-
-// // export default GeneratorPage;
-// import React, { useState, useMemo, useEffect } from 'react';
-// import axios from 'axios';
-// import { useDispatch } from 'react-redux';
-// import { useNavigate } from 'react-router-dom';
-
-// const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-
-// const studentTypes = [
-//   { id: 'class10', name: 'Class 10' },
-//   { id: 'class12', name: 'Class 12' },
-//   { id: 'engineering', name: 'Engineering' },
-// ];
-
-// const subjectsByType = {
-//   class10: [
-//     { id: 'maths', name: 'Mathematics' },
-//     { id: 'science', name: 'Science' },
-//     { id: 'sst', name: 'Social Science' },
-//     { id: 'english', name: 'English' },
-//     { id: 'hindi', name: 'Hindi' },
-//   ],
-//   class12: [
-//     { id: 'pcm_maths', name: 'Mathematics' },
-//     { id: 'pcm_physics', name: 'Physics' },
-//     { id: 'pcm_chemistry', name: 'Chemistry' },
-//     { id: 'commerce_accounts', name: 'Accountancy' },
-//     { id: 'commerce_business', name: 'Business Studies' },
-//     { id: 'english', name: 'English' },
-//   ],
-//   engineering: [
-//     { id: 'eng_maths', name: 'Engineering Mathematics' },
-//     { id: 'ds_algo', name: 'Data Structures & Algorithms' },
-//     { id: 'os', name: 'Operating Systems' },
-//     { id: 'dbms', name: 'DBMS' },
-//     { id: 'cn', name: 'Computer Networks' },
-//     { id: 'edc', name: 'Electronics / EDC' },
-//     { id: 'signals', name: 'Signals & Systems' },
-//   ],
-// };
-
-// const difficulties = [
-//   { id: 'any', name: 'Any Difficulty' },
-//   { id: 'easy', name: 'Easy' },
-//   { id: 'medium', name: 'Medium' },
-//   { id: 'hard', name: 'Hard' },
-// ];
-
-// const questionTypes = [
-//   { id: 'mcq', name: 'Multiple Choice (MCQ)' },
-//   { id: 'true_false', name: 'True / False' },
-//   { id: 'fill_blank', name: 'Fill in the Blanks' },
-// ];
-
-// const GeneratorPage = () => {
-//   const [form, setForm] = useState({
-//     test: '',
-//     amount: 10,
-//     studentType: 'engineering',
-//     subject: 'eng_maths',
-//     difficulty: 'easy',
-//     questionType: 'mcq',
-//   });
-
-//   const [loading, setLoading] = useState(false);
-//   const dispatch = useDispatch();
-//   const navigate = useNavigate();
-
-//   const subjectOptions = useMemo(
-//     () => subjectsByType[form.studentType] || [],
-//     [form.studentType]
-//   );
-
-//   useEffect(() => {
-//     if (!subjectOptions.some(s => s.id === form.subject)) {
-//       setForm(prev => ({
-//         ...prev,
-//         subject: subjectOptions[0]?.id || '',
-//       }));
-//     }
-//   }, [subjectOptions, form.subject]);
-
-//   const fetchQuestions = async (e) => {
-//     e.preventDefault();
-//     setLoading(true);
-
-//     try {
-//       const res = await axios.get(`${API_BASE_URL}/api/exams/generate`, {
-//         params: {
-//           amount: form.amount,
-//           studentType: form.studentType,
-//           subjectId: form.subject,
-//           difficulty: form.difficulty === 'any' ? '' : form.difficulty,
-//           questionType: form.questionType,
-//         },
-//       });
-
-//       dispatch({
-//         type: 'SET_DATA',
-//         payload: {
-//           questions: res.data,
-//           info: form,
-//         },
-//       });
-
-//       navigate('/preview');
-//     } catch {
-//       alert('Backend not reachable');
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   return (
-//     <div className="relative min-h-screen bg-[#050505] text-slate-100 p-6 md:p-10 font-sans overflow-hidden">
-
-//       {/* ===== BACKGROUND BLOBS ===== */}
-//       <div className="absolute inset-0 -z-10">
-//         <div className="absolute -top-40 -left-40 w-[520px] h-[520px] bg-indigo-600/30 rounded-full blur-[160px] animate-pulse" />
-//         <div className="absolute top-1/3 -right-40 w-[420px] h-[420px] bg-purple-600/30 rounded-full blur-[150px] animate-pulse delay-1000" />
-//       </div>
-
-//       <div className="max-w-4xl mx-auto space-y-10">
-
-//         {/* ===== HEADER ===== */}
-//         <header className="animate-fade-up">
-//           <h1 className="text-4xl font-black italic tracking-tight">
-//             Generate <span className="text-indigo-500">Exam</span>
-//           </h1>
-//           <p className="text-slate-500 text-sm mt-1">
-//             Configure your exam parameters and generate papers instantly
-//           </p>
-//         </header>
-
-//         {/* ===== FORM CARD ===== */}
-//         <section
-//           className="bg-slate-900/50 border border-slate-800
-//           rounded-3xl p-6 md:p-8 backdrop-blur-xl
-//           shadow-2xl animate-fade-up"
-//         >
-//           <form
-//             onSubmit={fetchQuestions}
-//             className="grid grid-cols-1 md:grid-cols-2 gap-5"
-//           >
-//             <input
-//               required
-//               placeholder="Test Name"
-//               className="md:col-span-2 bg-black/40 border border-slate-700
-//               rounded-xl p-3 text-slate-100 placeholder-slate-500
-//               focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 outline-none transition"
-//               value={form.test}
-//               onChange={(e) =>
-//                 setForm({ ...form, test: e.target.value })
-//               }
-//             />
-
-//             <Select
-//               value={form.studentType}
-//               onChange={(e) =>
-//                 setForm({ ...form, studentType: e.target.value })
-//               }
-//               options={studentTypes}
-//             />
-
-//             <Select
-//               value={form.subject}
-//               onChange={(e) =>
-//                 setForm({ ...form, subject: e.target.value })
-//               }
-//               options={subjectOptions}
-//             />
-
-//             <Select
-//               value={form.difficulty}
-//               onChange={(e) =>
-//                 setForm({ ...form, difficulty: e.target.value })
-//               }
-//               options={difficulties}
-//             />
-
-//             <Select
-//               value={form.questionType}
-//               onChange={(e) =>
-//                 setForm({ ...form, questionType: e.target.value })
-//               }
-//               options={questionTypes}
-//             />
-
-//             <input
-//               type="number"
-//               min={1}
-//               max={50}
-//               value={form.amount}
-//               onChange={(e) =>
-//                 setForm({ ...form, amount: Number(e.target.value) })
-//               }
-//               className="bg-black/40 border border-slate-700 rounded-xl p-3
-//               focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 outline-none transition"
-//             />
-
-//             <button
-//               disabled={loading}
-//               className="md:col-span-2 bg-indigo-600 hover:bg-indigo-500
-//               px-6 py-3 rounded-xl font-bold
-//               shadow-xl shadow-indigo-600/30
-//               hover:scale-[1.02] transition
-//               disabled:opacity-60"
-//             >
-//               {loading ? 'Generating…' : 'Generate Questions →'}
-//             </button>
-//           </form>
-//         </section>
-//       </div>
-//     </div>
-//   );
-// };
-
-// /* ===== REUSABLE SELECT ===== */
-// const Select = ({ value, onChange, options }) => (
-//   <select
-//     value={value}
-//     onChange={onChange}
-//     className="bg-black/40 border border-slate-700 rounded-xl p-3
-//     text-slate-100
-//     focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 outline-none transition"
-//   >
-//     {options.map((o) => (
-//       <option key={o.id} value={o.id} className="bg-slate-900">
-//         {o.name}
-//       </option>
-//     ))}
-//   </select>
-// );
-
-// export default GeneratorPage;
-import React, { useState, useMemo, useEffect } from 'react';
-import axios from 'axios';
-import { useDispatch } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
-
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+import React, { useState, useMemo, useEffect, useRef } from "react";
+import { useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import API from "../api/api";
 
 const studentTypes = [
-  { id: 'class10', name: 'High School', sub: 'Class 10', icon: '📖' },
-  { id: 'class12', name: 'Intermediate', sub: 'Class 12', icon: '🎓' },
-  { id: 'engineering', name: 'Engineering', sub: 'University', icon: '⚙️' },
+  { id: "class10", name: "High School" },
+  { id: "class12", name: "Intermediate" },
+  { id: "engineering", name: "Engineering" },
 ];
 
 const subjectsByType = {
   class10: [
-    { id: 'maths', name: 'Mathematics' }, { id: 'science', name: 'Science' },
-    { id: 'sst', name: 'Social Science' }, { id: 'english', name: 'English' },
+    { id: "maths", name: "Mathematics" },
+    { id: "science", name: "Science" },
+    { id: "sst", name: "Social Science" },
+    { id: "english", name: "English" },
   ],
   class12: [
-    { id: 'pcm_maths', name: 'Mathematics' }, { id: 'pcm_physics', name: 'Physics' },
-    { id: 'pcm_chemistry', name: 'Chemistry' }, { id: 'english', name: 'English' },
+    { id: "pcm_maths", name: "Mathematics" },
+    { id: "pcm_physics", name: "Physics" },
+    { id: "pcm_chemistry", name: "Chemistry" },
+    { id: "english", name: "English" },
   ],
   engineering: [
-    { id: 'eng_maths', name: 'Engineering Mathematics' },
-    { id: 'ds_algo', name: 'Data Structures' },
-    { id: 'os', name: 'Operating Systems' },
-    { id: 'dbms', name: 'DBMS' },
-    { id: 'cn', name: 'Computer Networks' },
+    { id: "eng_maths", name: "Engineering Mathematics" },
+    { id: "ds_algo", name: "Data Structures" },
+    { id: "os", name: "Operating Systems" },
+    { id: "dbms", name: "DBMS" },
+    { id: "cn", name: "Computer Networks" },
   ],
 };
 
 const GeneratorPage = () => {
-  const [form, setForm] = useState({
-    test: '',
-    amount: 10,
-    studentType: 'engineering',
-    subject: 'eng_maths',
-    difficulty: 'medium',
-    questionType: 'mcq', // Options: mcq, true_false, fill_blank
-  });
-
-  const [loading, setLoading] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const previewRef = useRef();
+
+  const [form, setForm] = useState({
+    schoolName: "",
+    board: "CBSE",
+    className: "",
+    examType: "Mid Term",
+    duration: "3 Hours",
+    test: "",
+    studentType: "engineering",
+    subject: "eng_maths",
+    difficulty: "medium",
+  });
+
+  const [sections, setSections] = useState([
+    { name: "Section A", count: 5, marks: 2 },
+    { name: "Section B", count: 5, marks: 4 },
+  ]);
+
+  const [instructions, setInstructions] = useState(
+    "1. Attempt all questions.\n2. Write clearly.\n3. All questions are compulsory."
+  );
+
+  const [showWatermark, setShowWatermark] = useState(true);
+  const [watermarkText, setWatermarkText] = useState("EXAM.AI");
+  const [loading, setLoading] = useState(false);
+
+  /* ================= UPLOAD STATES ================= */
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [customPrompt, setCustomPrompt] = useState("");
 
   const subjectOptions = useMemo(
     () => subjectsByType[form.studentType] || [],
     [form.studentType]
   );
 
-  useEffect(() => {
-    if (!subjectOptions.some((s) => s.id === form.subject)) {
-      setForm((prev) => ({ ...prev, subject: subjectOptions[0]?.id || '' }));
-    }
-  }, [subjectOptions, form.subject]);
+  const subjectName =
+    subjectOptions.find((s) => s.id === form.subject)?.name || "";
 
+  useEffect(() => {
+    if (!subjectOptions.find((s) => s.id === form.subject)) {
+      setForm((prev) => ({
+        ...prev,
+        subject: subjectOptions[0]?.id || "",
+      }));
+    }
+  }, [subjectOptions]);
+
+  const totalQuestions = useMemo(() => {
+    return sections.reduce((sum, s) => sum + Number(s.count || 0), 0);
+  }, [sections]);
+
+  const totalMarks = useMemo(() => {
+    return sections.reduce(
+      (sum, s) => sum + Number(s.count || 0) * Number(s.marks || 0),
+      0
+    );
+  }, [sections]);
+
+  const handleChange = (field, value) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSectionChange = (index, field, value) => {
+    const updated = [...sections];
+    updated[index][field] = value;
+    setSections(updated);
+  };
+
+  const addSection = () => {
+    setSections((prev) => [
+      ...prev,
+      {
+        name: `Section ${String.fromCharCode(65 + prev.length)}`,
+        count: 5,
+        marks: 5,
+      },
+    ]);
+  };
+  
+  const removeSection = (indexToRemove) => {
+  if (sections.length === 1) return; // prevent deleting last section
+
+  const updated = sections.filter((_, i) => i !== indexToRemove);
+  setSections(updated);
+};
+
+  /* ================= NORMAL GENERATION ================= */
   const fetchQuestions = async (e) => {
     e.preventDefault();
-    
-    // CO4: Form Validation
-    if (!form.test.trim()) return alert('Please enter a test name.');
-
     setLoading(true);
+
     try {
-      // CO5: HTTP GET Request via Axios
-      const res = await axios.get(`${API_BASE_URL}/api/exams/generate`, {
+      const res = await API.get("/exams/generate", {
         params: {
-          amount: form.amount,
+          amount: totalQuestions,
           studentType: form.studentType,
           subjectId: form.subject,
           difficulty: form.difficulty,
-          questionType: form.questionType,
+          prompt: customPrompt,
         },
       });
 
-      // VI: Redux Dispatch
-      dispatch({
-        type: 'SET_DATA',
-        payload: {
-          questions: res.data,
-          info: { 
-            ...form, 
-            subjectName: subjectOptions.find(s => s.id === form.subject)?.name 
-          },
+      const questions = Array.isArray(res.data)
+        ? res.data
+        : res.data?.questions || [];
+
+      const payload = {
+        questions,
+        examInfo: {
+          ...form,
+          subjectName,
+          totalMarks,
+          sections,
+          instructions,
+          watermarkText,
+          showWatermark,
         },
-      });
-      navigate('/preview');
+      };
+
+      dispatch({ type: "SET_DATA", payload });
+      localStorage.setItem("generatedPaper", JSON.stringify(payload));
+      navigate("/preview");
     } catch (err) {
-      // CO4: Error Handling/Display
-      if (err.response?.status === 429) {
-        alert("⚠️ AI Quota Reached! Please try again in 1 minute or check your Gemini API billing.");
-      } else {
-        alert('Server Error: ' + (err.response?.data?.message || "Internal Server Error"));
-      }
+      alert("Generation failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /* ================= GENERATE FROM UPLOAD ================= */
+  const [showUploadOptions, setShowUploadOptions] = useState(false);
+  const generateFromFile = async () => {
+    if (!selectedFile && !selectedImage) {
+      alert("Upload a file or image first.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const formData = new FormData();
+      if (selectedFile) formData.append("file", selectedFile);
+      if (selectedImage) formData.append("image", selectedImage);
+      formData.append("prompt", customPrompt);
+      formData.append("amount", totalQuestions);
+      formData.append("difficulty", form.difficulty);
+
+      const res = await API.post("/exams/generate-from-file", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      const questions = res.data.questions || [];
+
+      const payload = {
+        questions,
+        examInfo: {
+          ...form,
+          subjectName,
+          totalMarks,
+          sections,
+          instructions,
+          watermarkText,
+          showWatermark,
+        },
+      };
+
+      dispatch({ type: "SET_DATA", payload });
+      localStorage.setItem("generatedPaper", JSON.stringify(payload));
+      navigate("/preview");
+    } catch (err) {
+      console.error(err);
+      alert("AI generation failed.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#020617] text-slate-300 p-4 md:p-8 flex items-center justify-center font-sans overflow-hidden relative">
-      
-      {/* Visual Animations: Background Glows */}
-      <div className="absolute top-[-10%] left-[-5%] w-96 h-96 bg-indigo-600/10 rounded-full blur-[120px] animate-pulse" />
-      <div className="absolute bottom-[-10%] right-[-5%] w-96 h-96 bg-blue-600/10 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '2s' }} />
+    <div className="min-h-screen bg-gradient-to-br from-[#020617] via-[#071226] to-[#020617] text-white p-8">
+      <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12">
+        <form onSubmit={fetchQuestions} className="space-y-8">
 
-      <main className="relative z-10 w-full max-w-5xl bg-slate-900/40 border border-slate-800 backdrop-blur-2xl rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col lg:flex-row transition-all duration-500 hover:border-slate-700">
-        
-        {/* Left Side: Dynamic Branding */}
-        <div className="lg:w-1/3 bg-gradient-to-br from-indigo-600 to-blue-700 p-10 flex flex-col justify-between text-white relative">
-          <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent opacity-20" />
-          </div>
+          <h1 className="text-3xl font-black text-emerald-400">
+            Automated Academic Paper Generator
+          </h1>
+
           
-          <div className="relative z-10">
-            <div className="h-14 w-14 bg-white/20 rounded-2xl flex items-center justify-center mb-8 backdrop-blur-xl border border-white/30">
-              <span className="text-3xl font-black italic tracking-tighter">Q</span>
+
+    
+
+          {/* SCHOOL INFO */}
+          <div className="config-card grid md:grid-cols-2 gap-6">
+            <input
+              placeholder="School Name"
+              value={form.schoolName}
+              onChange={(e) =>
+                handleChange("schoolName", e.target.value)
+              }
+              className="input"
+            />
+
+            <select
+              value={form.board}
+              onChange={(e) =>
+                handleChange("board", e.target.value)
+              }
+              className="input"
+            >
+              <option>CBSE</option>
+              <option>ICSE</option>
+              <option>State Board</option>
+              <option>University</option>
+            </select>
+
+            <input
+              placeholder="Class Name"
+              value={form.className}
+              onChange={(e) =>
+                handleChange("className", e.target.value)
+              }
+              className="input"
+            />
+
+            <input
+              placeholder="Duration"
+              value={form.duration}
+              onChange={(e) =>
+                handleChange("duration", e.target.value)
+              }
+              className="input"
+            />
+          </div>
+
+          {/* EXAM SETTINGS */}
+          <div className="config-card grid md:grid-cols-2 gap-6">
+            <input
+              placeholder="Exam Title"
+              value={form.test}
+              onChange={(e) =>
+                handleChange("test", e.target.value)
+              }
+              className="input"
+            />
+
+            <select
+              value={form.studentType}
+              onChange={(e) =>
+                handleChange("studentType", e.target.value)
+              }
+              className="input"
+            >
+              {studentTypes.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={form.subject}
+              onChange={(e) =>
+                handleChange("subject", e.target.value)
+              }
+              className="input"
+            >
+              {subjectOptions.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={form.difficulty}
+              onChange={(e) =>
+                handleChange("difficulty", e.target.value)
+              }
+              className="input"
+            >
+              <option value="easy">Easy Level</option>
+              <option value="medium">Medium Level</option>
+              <option value="hard">Hard Level</option>
+            </select>
+          </div>
+
+         <div className="config-card space-y-5">
+  <h2 className="config-heading">Section Builder</h2>
+
+  {sections.map((section, index) => (
+    <div
+      key={index}
+      className="relative space-y-3 border border-white/5 p-4 rounded-xl bg-[#0b1220]"
+    >
+      
+      {/* DELETE BUTTON */}
+      <button
+        type="button"
+        onClick={() => removeSection(index)}
+        className="absolute top-3 right-3 text-red-400 hover:text-red-300 text-lg font-bold"
+      >
+        −
+      </button>
+
+      {/* Section Name */}
+      <div>
+        <label className="text-sm text-slate-400 mb-1 block">
+          Section Name
+        </label>
+        <input
+          value={section.name}
+          onChange={(e) =>
+            handleSectionChange(index, "name", e.target.value)
+          }
+          className="input"
+        />
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-4">
+        
+        {/* Number of Questions */}
+        <div>
+          <label className="text-sm text-slate-400 mb-1 block">
+            Number of Questions
+          </label>
+          <input
+            type="number"
+            min="0"
+            value={section.count}
+            onChange={(e) =>
+              handleSectionChange(index, "count", Number(e.target.value))
+            }
+            className="input"
+          />
+        </div>
+
+        {/* Marks Per Question */}
+        <div>
+          <label className="text-sm text-slate-400 mb-1 block">
+            Marks Per Question
+          </label>
+          <input
+            type="number"
+            min="0"
+            value={section.marks}
+            onChange={(e) =>
+              handleSectionChange(index, "marks", Number(e.target.value))
+            }
+            className="input"
+          />
+        </div>
+
+      </div>
+    </div>
+  ))}
+
+  <button
+    type="button"
+    onClick={addSection}
+    className="btn-primary"
+  >
+    + Add Section
+  </button>
+</div>
+          {/* ===== SINGLE PREMIUM ADD BUTTON SECTION ===== */}
+          {/* ===== GPT STYLE AI REFERENCE SECTION ===== */}
+<div className="config-card relative">
+  <h2 className="config-heading">AI Reference (Optional)</h2>
+
+  {/* Hidden Inputs */}
+  <input
+    type="file"
+    accept=".pdf,.doc,.docx"
+    id="fileUpload"
+    style={{ display: "none" }}
+    onChange={(e) => {
+      setSelectedFile(e.target.files[0]);
+      setSelectedImage(null);
+      setShowUploadOptions(false);
+    }}
+  />
+
+  <input
+    type="file"
+    accept="image/*"
+    id="imageUpload"
+    style={{ display: "none" }}
+    onChange={(e) => {
+      setSelectedImage(e.target.files[0]);
+      setSelectedFile(null);
+      setShowUploadOptions(false);
+    }}
+  />
+
+  {/* Add Button */}
+  <button
+    type="button"
+    onClick={() => setShowUploadOptions(!showUploadOptions)}
+    className="btn-primary w-full flex justify-center items-center gap-2"
+  >
+    + Add Attachment
+  </button>
+
+  {/* Dropdown Options */}
+  {showUploadOptions && (
+    <div className="absolute left-0 right-0 mt-2 bg-[#0f172a] border border-[#1e293b] rounded-xl shadow-xl z-50">
+      <button
+        type="button"
+        onClick={() => document.getElementById("fileUpload").click()}
+        className="w-full text-left px-4 py-3 hover:bg-[#1e293b] rounded-t-xl"
+      >
+        📄 Upload File (PDF / DOC)
+      </button>
+
+      <button
+        type="button"
+        onClick={() => document.getElementById("imageUpload").click()}
+        className="w-full text-left px-4 py-3 hover:bg-[#1e293b] rounded-b-xl"
+      >
+        🖼 Upload Image
+      </button>
+    </div>
+  )}
+
+  {/* Show Selected File */}
+  {(selectedFile || selectedImage) && (
+    <p className="mt-3 text-sm text-emerald-400">
+      Attached: {selectedFile?.name || selectedImage?.name}
+    </p>
+  )}
+
+  {/* Prompt */}
+  <textarea
+    rows={3}
+    placeholder="Specify topic / chapter / focus (optional)"
+    value={customPrompt}
+    onChange={(e) => setCustomPrompt(e.target.value)}
+    className="input mt-4"
+  />
+
+  {/* Generate Button Only If Something Attached */}
+  {(selectedFile || selectedImage) && (
+    <button
+      type="button"
+      onClick={generateFromFile}
+      className="btn-primary mt-4 w-full"
+    >
+      {loading ? "Generating from Upload..." : "Generate from Upload"}
+    </button>
+  )}
+</div>
+
+          {/* INSTRUCTIONS */}
+          <div className="config-card">
+            <h2 className="config-heading">Instruction Block</h2>
+            <textarea
+              rows={4}
+              value={instructions}
+              onChange={(e) => setInstructions(e.target.value)}
+              className="input"
+            />
+          </div>
+
+          {/* WATERMARK */}
+          <div className="config-card space-y-4">
+            <h2 className="config-heading">Watermark Settings</h2>
+
+            <div className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                checked={showWatermark}
+                onChange={() => setShowWatermark(!showWatermark)}
+              />
+              <span>Enable Watermark</span>
             </div>
-            <h1 className="text-4xl font-black leading-tight uppercase tracking-tighter mb-4">
-              Neural<br />Draft<span className="text-indigo-200">.</span>
-            </h1>
-            <p className="text-indigo-100 text-sm font-medium opacity-90 leading-relaxed">
-              Generate structured academic assessments using Gemini 1.5 Flash.
+
+            {showWatermark && (
+              <input
+                value={watermarkText}
+                onChange={(e) => setWatermarkText(e.target.value)}
+                className="input"
+                placeholder="Watermark Text"
+              />
+            )}
+          </div>
+
+          {/* TOTALS */}
+          <div className="config-card">
+            <p>Total Questions: {totalQuestions}</p>
+            <p className="text-lg font-bold text-emerald-400">
+              Total Marks: {totalMarks}
             </p>
           </div>
 
-          <div className="space-y-4 relative z-10">
-             <div className="flex items-center gap-3 bg-black/20 p-3 rounded-2xl border border-white/10">
-                <div className="h-2 w-2 bg-emerald-400 rounded-full animate-ping" />
-                <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-50">API Status: Online</span>
-             </div>
+          <button
+            disabled={loading}
+            className="btn-primary w-full"
+          >
+            {loading ? "Generating..." : "Generate Academic Paper"}
+          </button>
+        </form>
+
+        {/* RIGHT LIVE PREVIEW */}
+        <div
+          ref={previewRef}
+          className="relative bg-white text-black p-10 rounded-2xl shadow-2xl h-[650px] overflow-y-auto"
+        >
+          {showWatermark && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <h1 className="text-6xl font-black text-gray-200 rotate-[-30deg] opacity-20">
+                {watermarkText}
+              </h1>
+            </div>
+          )}
+
+          <div className="relative z-10 text-center border-b pb-6 mb-8">
+            <h2 className="font-bold uppercase text-lg">
+              {form.schoolName || "SCHOOL NAME"}
+            </h2>
+            <p className="text-sm text-gray-600">{form.board}</p>
+            <h3 className="mt-3 font-semibold text-lg">
+              {form.test || "Exam Title"}
+            </h3>
+            <p className="mt-4 text-sm">
+              Class: {form.className || "Class"} | Duration: {form.duration}
+            </p>
+            <p className="mt-3 font-semibold">
+              Total Questions: {totalQuestions} | Total Marks: {totalMarks}
+            </p>
+          </div>
+
+          <h4 className="font-bold text-base mb-4">
+            Marks Distribution
+          </h4>
+
+          <table className="w-full text-sm border">
+            <thead className="bg-gray-100">
+              <tr>
+                <th className="p-2 text-left">Section</th>
+                <th className="p-2 text-center">Questions</th>
+                <th className="p-2 text-center">Marks Each</th>
+                <th className="p-2 text-center">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sections.map((sec, index) => (
+                <tr key={index} className="border-t">
+                  <td className="p-2">{sec.name}</td>
+                  <td className="p-2 text-center">{sec.count}</td>
+                  <td className="p-2 text-center">{sec.marks}</td>
+                  <td className="p-2 text-center font-semibold">
+                    {sec.count * sec.marks}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          <div className="mt-8">
+            <h4 className="font-bold mb-2">Instructions:</h4>
+            <pre className="whitespace-pre-wrap text-sm">
+              {instructions}
+            </pre>
           </div>
         </div>
+      </div>
 
-        {/* Right Side: Form Content */}
-        <form onSubmit={fetchQuestions} className="flex-1 p-8 md:p-12 space-y-8 bg-black/20">
-          
-          {/* Test Identity */}
-          <div className="space-y-3">
-            <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-2">Exam Title</label>
-            <input
-              required
-              placeholder="e.g., Data Structures Mid-Term"
-              className="w-full bg-slate-950/50 border border-slate-800 rounded-2xl px-6 py-4 text-white text-lg font-bold focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all"
-              value={form.test}
-              onChange={(e) => setForm({ ...form, test: e.target.value })}
-            />
-          </div>
-
-          {/* Student Type Selection */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {studentTypes.map((t) => (
-              <button
-                key={t.id}
-                type="button"
-                onClick={() => setForm({ ...form, studentType: t.id })}
-                className={`p-4 rounded-2xl border text-left transition-all duration-300 ${
-                  form.studentType === t.id 
-                  ? 'bg-indigo-600/20 border-indigo-500 text-white shadow-lg shadow-indigo-500/10' 
-                  : 'bg-slate-950/30 border-slate-800 text-slate-500 hover:border-slate-700'
-                }`}
-              >
-                <div className="text-xl mb-1">{t.icon}</div>
-                <div className="text-[10px] font-black uppercase tracking-tight">{t.name}</div>
-              </button>
-            ))}
-          </div>
-
-          {/* Question Type Selection (The Requested Dropdown Replacement) */}
-          <div className="space-y-3">
-            <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-2">Question Format</label>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              {[
-                { id: 'mcq', name: 'MCQ', icon: '🔘' },
-                { id: 'true_false', name: 'True/False', icon: '⚖️' },
-                { id: 'fill_blank', name: 'Fill Blanks', icon: '⌨️' }
-              ].map((type) => (
-                <button
-                  key={type.id}
-                  type="button"
-                  onClick={() => setForm({ ...form, questionType: type.id })}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-xs font-bold transition-all ${
-                    form.questionType === type.id 
-                    ? 'bg-indigo-600 text-white border-indigo-500' 
-                    : 'bg-slate-950/50 border-slate-800 text-slate-400 hover:border-slate-700'
-                  }`}
-                >
-                  <span>{type.icon}</span>
-                  {type.name}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Subject & Difficulty Selection */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold text-slate-500 uppercase ml-2">Subject Area</label>
-              <select
-                value={form.subject}
-                onChange={(e) => setForm({ ...form, subject: e.target.value })}
-                className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-3 text-sm font-bold text-slate-200 outline-none focus:border-indigo-500 appearance-none transition-colors"
-              >
-                {subjectOptions.map((s) => (
-                  <option key={s.id} value={s.id}>{s.name}</option>
-                ))}
-              </select>
-            </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold text-slate-500 uppercase ml-2">Complexity</label>
-              <select
-                value={form.difficulty}
-                onChange={(e) => setForm({ ...form, difficulty: e.target.value })}
-                className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-3 text-sm font-bold text-slate-200 outline-none focus:border-indigo-500 appearance-none transition-colors"
-              >
-                <option value="easy">Level: Easy</option>
-                <option value="medium">Level: Medium</option>
-                <option value="hard">Level: Hard</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Quantity Slider */}
-          <div className="pt-4 space-y-4">
-            <div className="flex justify-between items-center px-2">
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Questions to Generate</label>
-              <span className="text-xl font-black text-indigo-500">{form.amount}</span>
-            </div>
-            <input
-              type="range" min="1" max="50"
-              value={form.amount}
-              onChange={(e) => setForm({ ...form, amount: Number(e.target.value) })}
-              className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
-            />
-            
-            <button
-              disabled={loading}
-              className="group relative w-full bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 py-5 rounded-2xl text-white font-black uppercase tracking-[0.2em] text-xs transition-all transform active:scale-[0.98] overflow-hidden"
-            >
-              <span className="relative z-10 flex items-center justify-center gap-3">
-                {loading ? (
-                  <>
-                    <div className="h-4 w-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                    Connecting to AI...
-                  </>
-                ) : (
-                  'Build My Exam Paper'
-                )}
-              </span>
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-            </button>
-          </div>
-        </form>
-      </main>
+      <style>{`
+        .input {
+          width: 100%;
+          padding: 14px;
+          border-radius: 14px;
+          background: #0f172a;
+          border: 1px solid #1e293b;
+          outline: none;
+          transition: all 0.3s ease;
+        }
+        .input:focus {
+          border-color: #10b981;
+          box-shadow: 0 0 0 2px rgba(16,185,129,0.2);
+        }
+        .config-card {
+          background: rgba(15, 23, 42, 0.6);
+          padding: 20px;
+          border-radius: 16px;
+          border: 1px solid rgba(255,255,255,0.05);
+        }
+        .config-heading {
+          font-weight: 700;
+          color: #10b981;
+          margin-bottom: 10px;
+        }
+        .btn-primary {
+          background: #10b981;
+          padding: 12px 18px;
+          border-radius: 12px;
+          font-weight: 600;
+          transition: 0.3s;
+        }
+        .btn-primary:hover {
+          background: #059669;
+        }
+      `}</style>
     </div>
   );
 };

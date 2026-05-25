@@ -1,136 +1,12 @@
-// import React, { useState } from 'react';
-// import { useNavigate, Link } from 'react-router-dom';
-// import API from '../api/api';
-
-// const TeacherLogin = () => {
-//   const [email, setEmail] = useState('');
-//   const [password, setPassword] = useState('');
-//   const navigate = useNavigate();
-
-//   const handleLogin = async (e) => {
-//     e.preventDefault();
-
-//     if (!email || !password) {
-//       alert('Please enter email and password');
-//       return;
-//     }
-
-//     try {
-//       const res = await API.post('/teachers/login', {
-//         email,
-//         password,
-//       });
-
-//       // ✅ KEEP AS IS
-//       localStorage.setItem('teacher', JSON.stringify(res.data));
-//       localStorage.setItem('isTeacherLoggedIn', 'true');
-
-//       navigate('/dashboard');
-//     } catch (err) {
-//       alert('Invalid email or password');
-//     }
-//   };
-
-//   return (
-//     <div className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#050505] text-slate-100">
-
-//       {/* ===== ANIMATED BACKGROUND BLOBS ===== */}
-//       <div className="absolute inset-0 -z-10">
-//         <div className="absolute -top-40 -left-40 w-[500px] h-[500px] bg-indigo-600/30 rounded-full blur-[160px] animate-pulse" />
-//         <div className="absolute top-1/3 -right-40 w-[420px] h-[420px] bg-purple-600/30 rounded-full blur-[150px] animate-pulse delay-1000" />
-//         <div className="absolute bottom-0 left-1/4 w-[360px] h-[360px] bg-emerald-500/20 rounded-full blur-[140px] animate-pulse delay-2000" />
-//       </div>
-
-//       {/* ===== LOGIN CARD ===== */}
-//       <form
-//         onSubmit={handleLogin}
-//         className="w-full max-w-md
-//         bg-slate-900/60 backdrop-blur-xl
-//         border border-slate-800
-//         rounded-3xl shadow-2xl
-//         p-8 md:p-10
-//         animate-fade-up"
-//       >
-//         {/* Header */}
-//         <div className="text-center mb-8">
-//           <div className="mx-auto mb-4 h-12 w-12 rounded-xl
-//             bg-indigo-600 flex items-center justify-center
-//             text-white font-black text-xl shadow-lg shadow-indigo-500/30">
-//             E
-//           </div>
-//           <h2 className="text-3xl font-black tracking-tight">
-//             Teacher Login
-//           </h2>
-//           <p className="text-slate-400 text-sm mt-1">
-//             Sign in to manage exams and question banks
-//           </p>
-//         </div>
-
-//         {/* Email */}
-//         <input
-//           type="email"
-//           placeholder="Email address"
-//           className="w-full mb-4 px-4 py-3 rounded-xl
-//             bg-black/40 border border-slate-700
-//             text-slate-100 placeholder-slate-500
-//             focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30
-//             outline-none transition"
-//           value={email}
-//           onChange={(e) => setEmail(e.target.value)}
-//         />
-
-//         {/* Password */}
-//         <input
-//           type="password"
-//           placeholder="Password"
-//           className="w-full mb-6 px-4 py-3 rounded-xl
-//             bg-black/40 border border-slate-700
-//             text-slate-100 placeholder-slate-500
-//             focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30
-//             outline-none transition"
-//           value={password}
-//           onChange={(e) => setPassword(e.target.value)}
-//         />
-
-//         {/* Login Button */}
-//         <button
-//           type="submit"
-//           className="w-full py-3 rounded-xl
-//             bg-indigo-600 text-white font-bold
-//             hover:bg-indigo-500 hover:scale-[1.02]
-//             transition shadow-xl shadow-indigo-600/30"
-//         >
-//           Login →
-//         </button>
-
-//         {/* 🔗 REGISTER REDIRECT (NEW) */}
-//         <p className="mt-6 text-center text-sm text-slate-400">
-//           Don’t have an account?{' '}
-//           <Link
-//             to="/register"
-//             className="text-indigo-400 font-semibold hover:text-indigo-300 transition"
-//           >
-//             Register here
-//           </Link>
-//         </p>
-
-//         {/* Footer hint */}
-//         <p className="mt-6 text-center text-xs text-slate-500">
-//           Academic Project • ExamGen Pro
-//         </p>
-//       </form>
-//     </div>
-//   );
-// };
-
-// export default TeacherLogin;
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import API from '../api/api';
+import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import API from "../api/api";
 
 const TeacherLogin = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
@@ -138,112 +14,146 @@ const TeacherLogin = () => {
     if (!email || !password) return;
 
     try {
-      const res = await API.post('/teachers/login', { email, password });
-      localStorage.setItem('teacher', JSON.stringify(res.data));
-      localStorage.setItem('isTeacherLoggedIn', 'true');
-      navigate('/dashboard');
+      const res = await API.post("/teachers/login", { email, password });
+      localStorage.setItem("teacher", JSON.stringify(res.data));
+      navigate("/dashboard");
     } catch (err) {
-      alert('Invalid email or password');
+      alert("Invalid email or password");
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#030712] relative overflow-hidden font-sans">
-      
-      {/* --- UNIQUE BACKGROUND: THE "SPOTLIGHT" --- */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[600px] bg-indigo-600/20 blur-[160px] rounded-full pointer-events-none" />
-      <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 pointer-events-none" />
+    <div className="min-h-screen bg-[#020617] flex items-center justify-center relative overflow-hidden text-white">
 
-      {/* --- FLOATING DECORATIVE ELEMENTS (DIFFERENT FROM REGISTER) --- */}
-      <div className="absolute top-20 right-[15%] w-32 h-32 border border-indigo-500/20 rounded-full animate-pulse" />
-      <div className="absolute bottom-20 left-[10%] w-64 h-64 border-t-2 border-indigo-500/10 rounded-full rotate-45" />
+      {/* ========= Animated Emerald Glow Background ========= */}
+      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-emerald-500/20 blur-[140px] rounded-full animate-pulse" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-green-400/10 blur-[140px] rounded-full animate-pulse delay-1000" />
 
-      {/* --- LOGIN PORTAL CARD --- */}
-      <div className="relative z-10 w-full max-w-md mx-auto group">
-        
-        {/* TOP ICON BOX (Floating above the card) */}
-        <div className="absolute -top-12 left-1/2 -translate-x-1/2 z-20">
-          <div className="w-24 h-24 bg-slate-900 border border-indigo-500/30 rounded-3xl flex items-center justify-center shadow-2xl transition-transform duration-500 group-hover:rotate-[10deg] group-hover:scale-110">
-            <svg width="50" height="50" viewBox="0 0 24 24" fill="none">
-              <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="#818cf8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M2 17L12 22L22 17" stroke="#818cf8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M2 12L12 17L22 12" stroke="#818cf8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+      {/* Subtle Grid Texture */}
+      <div
+        className="absolute inset-0 opacity-[0.07]"
+        style={{
+          backgroundImage:
+            "radial-gradient(#10b981 1px, transparent 1px)",
+          backgroundSize: "28px 28px",
+        }}
+      />
+
+      {/* ========= Login Card ========= */}
+      <div className="relative z-10 w-full max-w-md px-8">
+
+        {/* Logo / Title */}
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 backdrop-blur-xl mb-6 shadow-lg shadow-emerald-500/20 transition-all duration-500 hover:-translate-y-2 hover:rotate-6 hover:shadow-emerald-400/40 hover:scale-110 cursor-pointer">
+            🎓
           </div>
+
+          <h1 className="text-3xl font-black tracking-tight">
+            Exam<span className="text-emerald-400">AI</span>
+          </h1>
+
+          <p className="text-slate-400 text-sm mt-2">
+            Secure academic workspace access
+          </p>
         </div>
 
-        <form 
+        {/* Glass Card */}
+        <form
           onSubmit={handleLogin}
-          className="bg-white/[0.03] backdrop-blur-xl border border-white/10 rounded-[3rem] p-10 pt-16 shadow-[0_30px_100px_rgba(0,0,0,0.5)] transition-all duration-500 group-hover:border-indigo-500/40"
+          className="bg-white/[0.03] border border-white/10 backdrop-blur-2xl rounded-[2rem] p-10 shadow-[0_40px_120px_rgba(0,0,0,0.6)] hover:border-emerald-500/40 transition-all duration-500"
         >
-          {/* Header */}
-          <div className="text-center mb-10">
-            <h2 className="text-3xl font-black text-white tracking-tighter">Welcome Back</h2>
-            <p className="text-indigo-400/60 text-xs font-bold uppercase tracking-[0.2em] mt-2">Authorized Access Only</p>
-          </div>
+          <div className="space-y-6">
 
-          <div className="space-y-5">
-            {/* EMAIL FIELD */}
-            <div className="relative">
+            {/* Email */}
+            <div>
+              <label className="block text-xs uppercase tracking-wider text-slate-500 font-bold mb-2">
+                Email Address
+              </label>
               <input
                 type="email"
-                placeholder="Email Address"
+                placeholder="example@school.edu"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-slate-950/40 border border-white/5 rounded-2xl px-6 py-4 text-white outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all placeholder:text-slate-600"
                 required
+                className="input-field"
               />
-              <span className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-700 group-focus-within:text-indigo-500 transition-colors">@</span>
             </div>
 
-            {/* PASSWORD FIELD */}
+            {/* Password with Toggle */}
             <div className="relative">
+              <label className="block text-xs uppercase tracking-wider text-slate-500 font-bold mb-2">
+                Password
+              </label>
               <input
-                type="password"
-                placeholder="Password"
+                type={showPassword ? "text" : "password"}
+                placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-slate-950/40 border border-white/5 rounded-2xl px-6 py-4 text-white outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all placeholder:text-slate-600"
                 required
+                className="input-field pr-16"
               />
-              <svg className="absolute right-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              </svg>
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-[42px] text-xs font-bold text-emerald-400 hover:text-emerald-300 transition"
+              >
+                {showPassword ? "Hide" : "Show"}
+              </button>
             </div>
-          </div>
 
-          <div className="flex items-center justify-between mt-4 px-2">
-             <label className="flex items-center gap-2 text-xs text-slate-500 cursor-pointer hover:text-slate-300 transition">
-                <input type="checkbox" className="accent-indigo-500 rounded" /> Remember Me
-             </label>
-             <button type="button" className="text-xs font-bold text-indigo-400 hover:text-indigo-300 transition">Forgot Key?</button>
-          </div>
+            <div className="flex justify-between text-xs text-slate-500 mt-2">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" className="accent-emerald-500" />
+                Remember me
+              </label>
+              <span className="hover:text-emerald-400 cursor-pointer transition">
+                Forgot?
+              </span>
+            </div>
 
-          <button
-            type="submit"
-            className="w-full mt-8 py-4 bg-white text-[#030712] font-black rounded-2xl shadow-xl shadow-white/5 hover:bg-indigo-500 hover:text-white hover:shadow-indigo-500/20 transition-all duration-300 active:scale-95"
-          >
-            Authenticate →
-          </button>
+            {/* Button */}
+            <button
+              type="submit"
+              className="w-full mt-6 py-4 rounded-xl bg-gradient-to-r from-emerald-500 to-green-400 text-[#020617] font-black tracking-wide shadow-lg shadow-emerald-500/30 hover:shadow-emerald-400/50 hover:scale-[1.02] active:scale-95 transition-all duration-300"
+            >
+              Authenticate →
+            </button>
 
-          <div className="mt-10 text-center">
-            <p className="text-slate-500 text-sm">
-              Don't have access?{' '}
-              <Link to="/register" className="text-white font-bold hover:text-indigo-400 transition underline underline-offset-4 decoration-indigo-500/30">
+            <div className="text-center pt-6 text-sm text-slate-500">
+              Don’t have access?{" "}
+              <Link
+                to="/register"
+                className="text-emerald-400 font-semibold hover:text-emerald-300 transition"
+              >
                 Register Workspace
               </Link>
-            </p>
+            </div>
           </div>
         </form>
 
-        {/* BOTTOM DECORATIVE SHADOW */}
-        <div className="w-[80%] h-4 bg-indigo-600/20 blur-2xl mx-auto rounded-full mt-[-10px] opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+        {/* Bottom Hint */}
+        <p className="text-center text-[10px] text-slate-600 uppercase tracking-[0.3em] mt-10">
+          Academic Intelligence Portal v1.0
+        </p>
       </div>
 
-      {/* Footer hint */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 text-slate-600 text-[10px] font-bold uppercase tracking-[0.4em]">
-        Secure Terminal 1.0.4
-      </div>
+      <style>{`
+        .input-field {
+          width: 100%;
+          padding: 14px 16px;
+          border-radius: 14px;
+          background: #0f172a;
+          border: 1px solid #1e293b;
+          outline: none;
+          color: white;
+          transition: all 0.3s ease;
+        }
+
+        .input-field:focus {
+          border-color: #10b981;
+          box-shadow: 0 0 0 2px rgba(16,185,129,0.2);
+        }
+      `}</style>
     </div>
   );
 };
